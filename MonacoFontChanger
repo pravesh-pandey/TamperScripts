@@ -3,15 +3,18 @@
 // @version      1.1
 // @description  try to take over the world!
 // @author       https://www.linkedin.com/in/pravesh25/
-// @match        http://*
-// @match        https://*
+// @match        *://*/*
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=PT+Mono&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
     const element = document.querySelectorAll('*'); // Select all elements
     element.forEach(e => {
-        e.style.fontFamily='Monaco';
+        e.style.setProperty('font-family', 'PT Mono, monospace', 'important');
     });
 })();
