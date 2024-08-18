@@ -13,8 +13,19 @@
     link.href = 'https://fonts.googleapis.com/css2?family=PT+Mono&display=swap';
     link.rel = 'stylesheet';
     document.head.appendChild(link);
-    const element = document.querySelectorAll('*'); // Select all elements
-    element.forEach(e => {
-        e.style.setProperty('font-family', 'PT Mono, monospace', 'important');
-    });
+
+    // Apply font to all elements and specific form elements
+    const styles = `
+        * {
+            font-family: 'PT Mono', monospace !important;
+        }
+        input, textarea, code, pre {
+            font-family: 'PT Mono', monospace !important;
+        }
+    `;
+
+    // Create a style element and append it to the head
+    const styleElement = document.createElement('style');
+    styleElement.textContent = styles;
+    document.head.appendChild(styleElement);
 })();
