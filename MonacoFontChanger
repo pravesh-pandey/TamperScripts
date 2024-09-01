@@ -4,6 +4,9 @@
 // @description  try to take over the world!
 // @author       https://www.linkedin.com/in/pravesh25/
 // @match        *://*/*
+// @exclude      *://*.google.com/*
+// @exclude      *://google.com/*
+// @exclude      *://*.gs.com/*
 // @grant        none
 // ==/UserScript==
 
@@ -28,4 +31,5 @@
     const styleElement = document.createElement('style');
     styleElement.textContent = styles;
     document.head.appendChild(styleElement);
+
 })();
