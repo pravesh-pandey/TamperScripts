@@ -7,6 +7,8 @@
 // @exclude      *://*.google.com/*
 // @exclude      *://google.com/*
 // @exclude      *://*.gs.com/*
+// @exclude      *://*.coursera.org*
+// @exclude      *://*.overleaf.com/*
 // @grant        none
 // ==/UserScript==
 
