@@ -21,10 +21,7 @@
 
     // Apply font to all elements and specific form elements
     const styles = `
-        * {
-            font-family: 'PT Mono', monospace !important;
-        }
-        input, textarea, code, pre {
+        input, textarea, code, pre ,h1,h2,h3 {
             font-family: 'PT Mono', monospace !important;
         }
     `;
