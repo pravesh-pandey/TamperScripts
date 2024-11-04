@@ -4,9 +4,6 @@
 // @description  try to take over the world!
 // @author       https://www.linkedin.com/in/pravesh25/
 // @match        *://*/*
-// @exclude      *://*.google.com/*
-// @exclude      *://google.com/*
-// @exclude      *://*.gs.com/*
 // @exclude      *://*.coursera.org*
 // @exclude      *://*.overleaf.com/*
 // @grant        none
