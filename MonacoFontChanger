@@ -8,6 +8,7 @@
 // @grant        none
 // ==/UserScript==
 
+
 (function() {
     'use strict';
     const link = document.createElement('link');
@@ -15,7 +16,8 @@
     link.rel = 'stylesheet';
     document.head.appendChild(link);
 
-      const styles = `
+    // Apply font to all elements while excluding common icon classes
+    const styles = `
         *:not([class*="icon"]):not(i):not([class*="fa"]):not([class*="material-icons"]) {
             font-family: 'PT Mono', monospace !important;
         }
