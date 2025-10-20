@@ -2,13 +2,11 @@
 // @name         Amazon India Price History Tracker
 // @namespace    http://tampermonkey.net/
 // @version      1.2
-// @description  Shows lowest and highest price history for Amazon.in products with links to PriceHistory.app and Keepa
+// @description  Shows estimated price ranges for Amazon.in and Flipkart products with a Keepa shortcut on Amazon pages
 // @author       Your Name
 // @match        https://www.amazon.in/*
-// @grant        GM_xmlhttpRequest
+// @match        https://www.flipkart.com/*
 // @grant        GM_addStyle
-// @connect      pricehistory.app
-// @connect      api.pricehistory.app
 // @icon         https://www.amazon.in/favicon.ico
 // @run-at       document-idle
 // @license      MIT
@@ -271,8 +269,14 @@
        UTILITY FUNCTIONS
        ============================================ */
 
-    // Check if current page is a single product page (not search/listing page)
-    function isProductPage() {
+    function detectPlatform() {
+        const host = window.location.hostname.replace(/^www\./, '');
+        if (host === 'flipkart.com' || host.endsWith('.flipkart.com')) return 'flipkart';
+        if (host.includes('amazon.')) return 'amazon';
+        return null;
+    }
+
+    function isAmazonProductPage() {
         const path = window.location.pathname;
         const search = window.location.search;
 
@@ -297,8 +301,24 @@
         return !!(hasProductTitle && hasPriceBlock);
     }
 
+    function isFlipkartProductPage() {
+        const path = window.location.pathname;
+        if (!path.includes('/p/')) return false;
+
+        const titleEl = document.querySelector('[data-testid="product-title"], h1 span.B_NuCI, span.B_NuCI');
+        const priceEl = document.querySelector('._30jeq3._16Jk6d, ._30jeq3, .Nx9bqj, [data-testid="price"]');
+        return !!(titleEl && priceEl);
+    }
+
+    // Check if current page is a single product page (not search/listing page)
+    function isProductPage(platform) {
+        if (platform === 'amazon') return isAmazonProductPage();
+        if (platform === 'flipkart') return isFlipkartProductPage();
+        return false;
+    }
+
     // Extract ASIN from Amazon URL or page
-    function getASIN() {
+    function getAmazonASIN() {
         // Method 1: From URL pattern /dp/ASIN or /gp/product/ASIN (most reliable)
         const urlMatch = window.location.pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/);
         if (urlMatch) return urlMatch[1];
@@ -309,7 +329,7 @@
         if (asinParam && asinParam.length === 10) return asinParam;
 
         // Only use DOM methods if we're confident it's a product page
-        if (!isProductPage()) return null;
+        if (!isAmazonProductPage()) return null;
 
         // Method 3: From hidden input fields
         const hiddenInput = document.querySelector('input[name="ASIN"]');
@@ -318,25 +338,35 @@
         return null;
     }
 
-    // Get current price from Amazon page
-    function getCurrentPrice() {
-        const selectors = [
-            '.a-price[data-a-color="price"] .a-offscreen',
-            '.a-price[data-a-color="base"] .a-offscreen',
-            '#corePriceDisplay_desktop_feature_div .a-price .a-offscreen',
-            '#corePrice_feature_div .a-price .a-offscreen',
-            '.a-price.a-text-price .a-offscreen',
-            '#priceblock_ourprice',
-            '#priceblock_dealprice',
-            '#priceblock_saleprice',
-            '.a-price-whole'
-        ];
+    function getFlipkartProductId() {
+        const url = new URL(window.location.href);
+        const pidParam = url.searchParams.get('pid');
+        if (pidParam) return pidParam;
 
+        const pathMatch = window.location.pathname.match(/\/p\/([^/?]+)/);
+        if (pathMatch) return decodeURIComponent(pathMatch[1]);
+
+        const skuEl = document.querySelector('[data-sku], [data-pid]');
+        const sku = skuEl && (skuEl.getAttribute('data-sku') || skuEl.getAttribute('data-pid'));
+        if (sku) return sku;
+
+        return null;
+    }
+
+    function getProductIdentifier(platform) {
+        if (platform === 'amazon') return getAmazonASIN();
+        if (platform === 'flipkart') return getFlipkartProductId();
+        return null;
+    }
+
+    function extractPriceFromSelectors(selectors) {
         for (const selector of selectors) {
             const elements = document.querySelectorAll(selector);
             for (const element of elements) {
                 const priceText = element.textContent || element.innerText;
-                const price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+                if (!priceText) continue;
+                const normalized = priceText.replace(/[^\d.,]/g, '').replace(/,/g, '');
+                const price = parseFloat(normalized);
                 if (!isNaN(price) && price > 0) {
                     return price;
                 }
@@ -345,12 +375,44 @@
         return null;
     }
 
+    // Get current price from page
+    function getCurrentPrice(platform) {
+        if (platform === 'amazon') {
+            return extractPriceFromSelectors([
+                '.a-price[data-a-color="price"] .a-offscreen',
+                '.a-price[data-a-color="base"] .a-offscreen',
+                '#corePriceDisplay_desktop_feature_div .a-price .a-offscreen',
+                '#corePrice_feature_div .a-price .a-offscreen',
+                '.a-price.a-text-price .a-offscreen',
+                '#priceblock_ourprice',
+                '#priceblock_dealprice',
+                '#priceblock_saleprice',
+                '.a-price-whole'
+            ]);
+        }
+
+        if (platform === 'flipkart') {
+            return extractPriceFromSelectors([
+                'div[data-testid="price"]',
+                '._30jeq3._16Jk6d',
+                '._16Jk6d',
+                '.Nx9bqj',
+                'div.CxhGGd'
+            ]);
+        }
+
+        return null;
+    }
+
     // Get product title
     function getProductTitle() {
         const selectors = [
             '#productTitle',
             '#title',
-            '.product-title-word-break'
+            '.product-title-word-break',
+            '[data-testid="product-title"]',
+            'h1 span.B_NuCI',
+            'span.B_NuCI'
         ];
 
         for (const selector of selectors) {
@@ -398,24 +460,10 @@
     }
 
     /* ============================================
-       API FUNCTIONS
-       ============================================ */
-
-    // Fetch price history from PriceHistory.app API (if available)
-    function fetchPriceHistory(asin) {
-        return new Promise((resolve) => {
-            // PriceHistory.app doesn't have a public free API
-            // We'll resolve with null and provide links instead
-            // If you have API access, you can implement it here
-            resolve(null);
-        });
-    }
-
-    /* ============================================
        UI FUNCTIONS
        ============================================ */
 
-    function createWidget(asin, currentPrice) {
+    function createWidget(platform, productId, currentPrice) {
         // Remove existing widget
         const existing = document.getElementById('amazon-price-history-widget');
         if (existing) existing.remove();
@@ -447,11 +495,11 @@
 
         // Fetch and display price history
         setTimeout(() => {
-            displayPriceData(widget, asin, currentPrice);
+            displayPriceData(widget, platform, productId, currentPrice);
         }, CONFIG.ANIMATION_DELAY);
     }
 
-    function displayPriceData(widget, asin, currentPrice) {
+    function displayPriceData(widget, platform, productId, currentPrice) {
         // Since we don't have direct API access, we'll show estimated data
         // and provide links to actual price history services
 
@@ -459,7 +507,11 @@
         // Real implementation would fetch from API
         const lowestPrice = currentPrice ? Math.round(currentPrice * 0.70) : null;
         const highestPrice = currentPrice ? Math.round(currentPrice * 1.30) : null;
-        const keepaLink = buildKeepaUrl(asin);
+        const keepaLink = platform === 'amazon' && productId ? buildKeepaUrl(productId) : null;
+        const identifierLabel = platform === 'amazon' ? 'ASIN' : 'Product ID';
+        const infoText = platform === 'amazon'
+            ? 'ℹ️ Click below to view detailed price history with accurate lowest/highest prices and historical charts on Keepa'
+            : 'ℹ️ Keepa tracking is currently available only for Amazon. Flipkart prices shown above are estimates.';
 
         let savingsHTML = '';
         if (currentPrice && lowestPrice) {
@@ -502,19 +554,21 @@
                 ${savingsHTML}
 
                 <div class="ph-info">
-                    ℹ️ Click below to view detailed price history with accurate lowest/highest prices and historical charts on Keepa
+                    ${infoText}
                 </div>
 
-                <div class="ph-buttons">
-                    <a href="${keepaLink}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       class="ph-btn ph-btn-primary">
-                        📈 View on Keepa
-                    </a>
-                </div>
+                ${keepaLink ? `
+                    <div class="ph-buttons">
+                        <a href="${keepaLink}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="ph-btn ph-btn-primary">
+                            📈 View on Keepa
+                        </a>
+                    </div>
+                ` : ''}
 
-                <div class="ph-asin">ASIN: ${asin}</div>
+                ${productId ? `<div class="ph-asin">${identifierLabel}: ${productId}</div>` : ''}
             </div>
         `;
 
@@ -532,36 +586,42 @@
        ============================================ */
 
     function initialize() {
+        const platform = detectPlatform();
+        if (!platform) {
+            console.log('[Amazon Price History] Unsupported platform.');
+            return;
+        }
+
         // First check if we're on a single product page (not search/listing)
-        if (!isProductPage()) {
+        if (!isProductPage(platform)) {
             console.log('[Amazon Price History] Not a product page (search/listing page detected)');
             return;
         }
 
         // Check if we can get ASIN
-        const asin = getASIN();
-        if (!asin) {
-            console.log('[Amazon Price History] Product page detected but ASIN not found');
+        const productId = getProductIdentifier(platform);
+        if (!productId) {
+            console.log('[Amazon Price History] Product page detected but identifier not found');
             return;
         }
 
-        console.log('[Amazon Price History] Found ASIN:', asin);
+        console.log(`[Amazon Price History] Platform: ${platform}, Product ID: ${productId}`);
 
         // Try to get current price with retries
         let retries = 0;
         const attemptPriceExtraction = () => {
-            const currentPrice = getCurrentPrice();
+            const currentPrice = getCurrentPrice(platform);
 
             if (currentPrice) {
                 console.log('[Amazon Price History] Current price:', formatPrice(currentPrice));
-                createWidget(asin, currentPrice);
+                createWidget(platform, productId, currentPrice);
             } else if (retries < CONFIG.MAX_RETRIES) {
                 retries++;
                 console.log(`[Amazon Price History] Price not found, retry ${retries}/${CONFIG.MAX_RETRIES}`);
                 setTimeout(attemptPriceExtraction, CONFIG.RETRY_DELAY);
             } else {
                 console.log('[Amazon Price History] Could not find price after retries');
-                createWidget(asin, null);
+                createWidget(platform, productId, null);
             }
         };
 
