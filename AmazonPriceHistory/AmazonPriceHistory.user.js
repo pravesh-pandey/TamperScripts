@@ -434,6 +434,13 @@
         return (((current - compare) / compare) * 100).toFixed(1);
     }
 
+    function buildPriceHistoryAppLink(productId, productTitle) {
+        const titlePart = (productTitle || '').trim();
+        const idPart = (productId || '').trim();
+        const searchTerms = [titlePart, idPart].filter(Boolean).join(' ') || window.location.href;
+        return `https://pricehistoryapp.com/search?q=${encodeURIComponent(searchTerms)}`;
+    }
+
     function getKeepaDomainId() {
         const host = window.location.hostname.replace(/^www\./, '');
         const keepaDomainMap = {
@@ -507,11 +514,15 @@
         // Real implementation would fetch from API
         const lowestPrice = currentPrice ? Math.round(currentPrice * 0.70) : null;
         const highestPrice = currentPrice ? Math.round(currentPrice * 1.30) : null;
+        const productTitle = getProductTitle();
         const keepaLink = platform === 'amazon' && productId ? buildKeepaUrl(productId) : null;
+        const priceHistoryAppLink = platform === 'flipkart'
+            ? buildPriceHistoryAppLink(productId, productTitle)
+            : null;
         const identifierLabel = platform === 'amazon' ? 'ASIN' : 'Product ID';
         const infoText = platform === 'amazon'
             ? 'ℹ️ Click below to view detailed price history with accurate lowest/highest prices and historical charts on Keepa'
-            : 'ℹ️ Keepa tracking is currently available only for Amazon. Flipkart prices shown above are estimates.';
+            : 'ℹ️ Click below to open PriceHistoryApp for Flipkart charts and historical pricing.';
 
         let savingsHTML = '';
         if (currentPrice && lowestPrice) {
@@ -564,6 +575,17 @@
                            rel="noopener noreferrer"
                            class="ph-btn ph-btn-primary">
                             📈 View on Keepa
+                        </a>
+                    </div>
+                ` : ''}
+
+                ${priceHistoryAppLink ? `
+                    <div class="ph-buttons">
+                        <a href="${priceHistoryAppLink}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="ph-btn ph-btn-primary">
+                            📊 View on PriceHistoryApp
                         </a>
                     </div>
                 ` : ''}
