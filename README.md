@@ -4,18 +4,18 @@ A curated collection of Tampermonkey/Greasemonkey userscripts to enhance your we
 
 ## 📚 Available Scripts
 
-### 🛒 [Amazon Price History Tracker](./AmazonPriceHistory/)
-Track price history for products on Amazon India with visual widgets and links to detailed price tracking services.
+### 🛒 [Amazon & Flipkart Price History Helper](./AmazonFlipkartPriceHistory/)
+Track price trends for Amazon India and Flipkart products with a floating widget and quick access to external history tools.
 
-**Install:** [Click to install](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/AmazonPriceHistory/AmazonPriceHistory.user.js)
+**Install:** [Click to install](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/AmazonFlipkartPriceHistory/AmazonFlipkartPriceHistory.user.js)
 
 **Features:**
 - Compact, responsive widget showing current, lowest, and highest prices
-- Direct links to PriceHistory.app and Keepa
-- Only appears on single product pages (not search results)
+- Direct links to Keepa (Amazon) and PriceHistoryApp (Flipkart)
+- Appears only on individual product pages
 - Mobile-friendly design
 
-**Sites:** `amazon.in`
+**Sites:** `amazon.in`, `flipkart.com`
 
 ---
 
@@ -122,7 +122,7 @@ Each script has its own README with detailed usage instructions. Click on the sc
 
 ```
 TamperScripts/
-├── AmazonPriceHistory/          # Amazon India price tracking
+├── AmazonFlipkartPriceHistory/  # Amazon & Flipkart price tracking
 ├── BypassShortlinks/            # Shortlink bypass tool
 ├── CodeforcesHelper/            # Codeforces solution viewer
 ├── FontChanger/                 # PT Mono font changer (4 versions)
@@ -135,7 +135,7 @@ TamperScripts/
 
 | Script | Chrome | Firefox | Edge | Safari | Opera |
 |--------|--------|---------|------|--------|-------|
-| Amazon Price History | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Amazon & Flipkart Price History | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Bypass Shortlinks | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Web Restriction Remover | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Font Changer | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -168,7 +168,7 @@ Pravesh Pandey
 **Most Used:**
 1. 🔓 Web Restriction Remover - Universal utility
 2. 🔤 Font Changer v2.0 - Best for developers/readers
-3. 🛒 Amazon Price History - Save money on purchases
+3. 🛒 Amazon & Flipkart Price History - Save money on purchases
 
 **Best for Productivity:**
 - 💻 Codeforces Helper - Competitive programmers

@@ -1,12 +1,12 @@
-# Amazon India Price History Tracker
+# Amazon & Flipkart Price History Helper
 
-A Tampermonkey userscript that displays price history information for products on Amazon.in with direct links to detailed price tracking services.
+A Tampermonkey userscript that displays price history information for products on Amazon.in and Flipkart, with direct shortcuts to detailed price tracking services (Keepa for Amazon, PriceHistoryApp for Flipkart).
 
 ## Features
 
 - 📊 **Price Display Widget** - Beautiful floating widget showing current, lowest, and highest prices
 - 💰 **Savings Calculator** - Shows potential savings if you bought at the lowest price
-- 🔗 **Quick Links** - Direct access to PriceHistory.app and Keepa for detailed charts
+- 🔗 **Quick Links** - Direct access to Keepa (Amazon) or PriceHistoryApp (Flipkart) for detailed charts
 - 🎨 **Amazon-themed UI** - Gradient design matching Amazon's brand colors
 - ⚡ **Auto-detection** - Automatically detects product ASIN and current price
 - 🔄 **SPA Support** - Works with Amazon's dynamic page navigation
@@ -15,26 +15,26 @@ A Tampermonkey userscript that displays price history information for products o
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/) browser extension
 2. Click on the Tampermonkey icon → Create a new script
-3. Copy the contents of `AmazonPriceHistory.user.js`
+3. Copy the contents of `AmazonFlipkartPriceHistory.user.js`
 4. Paste into the editor and save (Ctrl+S)
-5. Visit any Amazon.in product page
+5. Visit any Amazon.in or Flipkart product page
 
 ## Usage
 
-1. Navigate to any Amazon.in product page (e.g., the example link you provided)
+1. Navigate to any Amazon.in or Flipkart product page
 2. The price history widget will automatically appear in the top-right corner
 3. View estimated price ranges (lowest/highest)
 4. Click buttons to view detailed price history on:
-   - **PriceHistory.app** - Clean interface with price charts
-   - **Keepa** - Comprehensive tracking with advanced features
+   - **Keepa** (Amazon) - Comprehensive tracking with advanced features
+   - **PriceHistoryApp** (Flipkart) - Flipkart price charts and history
 
 ## Widget Components
 
-- **Current Price** - Today's price from Amazon
+- **Current Price** - Today's price from the product page
 - **Lowest Price (Est.)** - Estimated historical lowest price
 - **Highest Price (Est.)** - Estimated historical highest price
 - **Savings Info** - Potential savings compared to lowest price
-- **Quick Links** - Buttons to view full history on tracking sites
+- **Quick Links** - Buttons to view full history on tracking sites (Keepa or PriceHistoryApp depending on site)
 
 ## Example URL
 
@@ -45,8 +45,8 @@ https://www.amazon.in/Lukzer-Electric-Automatic-Adjustable-Ergonomic/dp/B0FK5SPD
 
 ## Notes
 
-- **Estimates vs Real Data**: The widget shows estimated price ranges. For accurate historical data, click the PriceHistory.app or Keepa buttons
-- **API Limitations**: Both PriceHistory.app and Keepa require API keys for programmatic access, so the script provides convenient links instead
+- **Estimates vs Real Data**: The widget shows estimated price ranges. For accurate historical data, click the Keepa or PriceHistoryApp buttons
+- **API Limitations**: Both Keepa and PriceHistoryApp require API access for automation, so the script provides convenient links instead
 - **Privacy**: Script runs locally in your browser, no data is sent to external servers
 - **Performance**: Minimal impact on page load, widget appears after price detection
 
@@ -78,8 +78,8 @@ The widget automatically adapts to different screen sizes:
 ## Troubleshooting
 
 **Widget doesn't appear:**
-- Check if you're on an actual product page (URL contains `/dp/` or `/gp/product/`)
-- Open browser console and look for `[Amazon Price History]` logs
+- Check if you're on an actual product page (URL contains `/dp/`, `/gp/product/`, or `/p/`)
+- Open browser console and look for `[Price History Helper]` logs
 - Refresh the page
 
 **Price shows as N/A:**

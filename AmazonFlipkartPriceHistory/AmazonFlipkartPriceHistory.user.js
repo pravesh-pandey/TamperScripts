@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Amazon India Price History Tracker
+// @name         Amazon & Flipkart Price History Helper
 // @namespace    http://tampermonkey.net/
 // @version      1.2
 // @description  Shows estimated price ranges for Amazon.in and Flipkart products with a Keepa shortcut on Amazon pages
@@ -22,7 +22,7 @@
         WIDGET_POSITION: { top: '80px', right: '15px' },
         ANIMATION_DELAY: 300,
         RETRY_DELAY: 1000,
-        MAX_RETRIES: 3
+        MAX_RETRIES: 6
     };
 
     /* ============================================
@@ -108,6 +108,13 @@
 
         .ph-content {
             padding: 12px;
+        }
+
+        .ph-product-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            line-height: 1.3;
         }
 
         .ph-price-box {
@@ -303,11 +310,7 @@
 
     function isFlipkartProductPage() {
         const path = window.location.pathname;
-        if (!path.includes('/p/')) return false;
-
-        const titleEl = document.querySelector('[data-testid="product-title"], h1 span.B_NuCI, span.B_NuCI');
-        const priceEl = document.querySelector('._30jeq3._16Jk6d, ._30jeq3, .Nx9bqj, [data-testid="price"]');
-        return !!(titleEl && priceEl);
+        return path.includes('/p/');
     }
 
     // Check if current page is a single product page (not search/listing page)
@@ -365,7 +368,9 @@
             for (const element of elements) {
                 const priceText = element.textContent || element.innerText;
                 if (!priceText) continue;
-                const normalized = priceText.replace(/[^\d.,]/g, '').replace(/,/g, '');
+                const numericMatch = priceText.replace(/₹/g, '').match(/\d[\d,]*(?:\.\d+)?/);
+                if (!numericMatch) continue;
+                const normalized = numericMatch[0].replace(/,/g, '');
                 const price = parseFloat(normalized);
                 if (!isNaN(price) && price > 0) {
                     return price;
@@ -394,10 +399,14 @@
         if (platform === 'flipkart') {
             return extractPriceFromSelectors([
                 'div[data-testid="price"]',
+                'div[data-test-id="sp-price"]',
                 '._30jeq3._16Jk6d',
+                '._30jeq3',
                 '._16Jk6d',
                 '.Nx9bqj',
-                'div.CxhGGd'
+                '.CxhGGd',
+                '._25b18c',
+                '.hPF1R-'
             ]);
         }
 
@@ -412,7 +421,10 @@
             '.product-title-word-break',
             '[data-testid="product-title"]',
             'h1 span.B_NuCI',
-            'span.B_NuCI'
+            'span.B_NuCI',
+            'h1.yZS5cf',
+            '.VU-ZUz',
+            '.yhB1nd'
         ];
 
         for (const selector of selectors) {
@@ -434,11 +446,41 @@
         return (((current - compare) / compare) * 100).toFixed(1);
     }
 
-    function buildPriceHistoryAppLink(productId, productTitle) {
-        const titlePart = (productTitle || '').trim();
-        const idPart = (productId || '').trim();
-        const searchTerms = [titlePart, idPart].filter(Boolean).join(' ') || window.location.href;
-        return `https://pricehistoryapp.com/search?q=${encodeURIComponent(searchTerms)}`;
+    function sanitizeSlug(value) {
+        return (value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
+    function getFlipkartProductSlug() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        if (!segments.length) return null;
+
+        const pIndex = segments.indexOf('p');
+        if (pIndex > 0) {
+            const slug = sanitizeSlug(segments[pIndex - 1]);
+            return slug && slug !== 'p' ? slug : null;
+        }
+
+        const fallbackSlug = sanitizeSlug(segments[0]);
+        return fallbackSlug && fallbackSlug !== 'p' ? fallbackSlug : null;
+    }
+
+    function buildPriceHistoryAppLink() {
+        const slug = getFlipkartProductSlug();
+        if (slug) {
+            return {
+                url: `https://pricehistoryapp.com/product/${slug}`,
+                isDirect: true
+            };
+        }
+
+        const productUrl = window.location.href.split('#')[0];
+        return {
+            url: `https://pricehistoryapp.com/page/search#gsc.tab=0&gsc.q=${encodeURIComponent(productUrl)}`,
+            isDirect: false
+        };
     }
 
     function getKeepaDomainId() {
@@ -517,12 +559,17 @@
         const productTitle = getProductTitle();
         const keepaLink = platform === 'amazon' && productId ? buildKeepaUrl(productId) : null;
         const priceHistoryAppLink = platform === 'flipkart'
-            ? buildPriceHistoryAppLink(productId, productTitle)
+            ? buildPriceHistoryAppLink()
             : null;
-        const identifierLabel = platform === 'amazon' ? 'ASIN' : 'Product ID';
+        const identifierLabel = platform === 'amazon' ? 'ASIN' : 'Flipkart PID';
         const infoText = platform === 'amazon'
             ? 'ℹ️ Click below to view detailed price history with accurate lowest/highest prices and historical charts on Keepa'
-            : 'ℹ️ Click below to open PriceHistoryApp for Flipkart charts and historical pricing.';
+            : priceHistoryAppLink?.isDirect
+                ? 'ℹ️ Click below to view Flipkart price charts on PriceHistoryApp.'
+                : 'ℹ️ Click below to search for this product on PriceHistoryApp.';
+        const priceHistoryButtonLabel = priceHistoryAppLink?.isDirect
+            ? '📊 View on PriceHistoryApp'
+            : '🔍 Search on PriceHistoryApp';
 
         let savingsHTML = '';
         if (currentPrice && lowestPrice) {
@@ -544,6 +591,7 @@
                 <div class="ph-close" title="Close">×</div>
             </div>
             <div class="ph-content">
+                <div class="ph-product-title">${productTitle}</div>
                 <div class="ph-price-box ph-current">
                     <div class="ph-label">💵 Current Price</div>
                     <div class="ph-value">${currentPrice ? formatPrice(currentPrice) : 'N/A'}</div>
@@ -581,11 +629,11 @@
 
                 ${priceHistoryAppLink ? `
                     <div class="ph-buttons">
-                        <a href="${priceHistoryAppLink}"
+                        <a href="${priceHistoryAppLink.url}"
                            target="_blank"
                            rel="noopener noreferrer"
                            class="ph-btn ph-btn-primary">
-                            📊 View on PriceHistoryApp
+                            ${priceHistoryButtonLabel}
                         </a>
                     </div>
                 ` : ''}
@@ -610,24 +658,24 @@
     function initialize() {
         const platform = detectPlatform();
         if (!platform) {
-            console.log('[Amazon Price History] Unsupported platform.');
+            console.log('[Price History Helper] Unsupported platform.');
             return;
         }
 
         // First check if we're on a single product page (not search/listing)
         if (!isProductPage(platform)) {
-            console.log('[Amazon Price History] Not a product page (search/listing page detected)');
+            console.log('[Price History Helper] Not a product page (search/listing page detected)');
             return;
         }
 
         // Check if we can get ASIN
         const productId = getProductIdentifier(platform);
         if (!productId) {
-            console.log('[Amazon Price History] Product page detected but identifier not found');
+            console.log('[Price History Helper] Product page detected but identifier not found');
             return;
         }
 
-        console.log(`[Amazon Price History] Platform: ${platform}, Product ID: ${productId}`);
+        console.log(`[Price History Helper] Platform: ${platform}, Product ID: ${productId}`);
 
         // Try to get current price with retries
         let retries = 0;
@@ -635,14 +683,14 @@
             const currentPrice = getCurrentPrice(platform);
 
             if (currentPrice) {
-                console.log('[Amazon Price History] Current price:', formatPrice(currentPrice));
+                console.log('[Price History Helper] Current price:', formatPrice(currentPrice));
                 createWidget(platform, productId, currentPrice);
             } else if (retries < CONFIG.MAX_RETRIES) {
                 retries++;
-                console.log(`[Amazon Price History] Price not found, retry ${retries}/${CONFIG.MAX_RETRIES}`);
+                console.log(`[Price History Helper] Price not found, retry ${retries}/${CONFIG.MAX_RETRIES}`);
                 setTimeout(attemptPriceExtraction, CONFIG.RETRY_DELAY);
             } else {
-                console.log('[Amazon Price History] Could not find price after retries');
+                console.log('[Price History Helper] Could not find price after retries');
                 createWidget(platform, productId, null);
             }
         };
@@ -664,11 +712,11 @@
         const currentUrl = location.href;
         if (currentUrl !== lastUrl) {
             lastUrl = currentUrl;
-            console.log('[Amazon Price History] URL changed, re-initializing...');
+            console.log('[Price History Helper] URL changed, re-initializing...');
             setTimeout(initialize, 500);
         }
     }).observe(document.body, { childList: true, subtree: true });
 
-    console.log('[Amazon Price History] Script loaded successfully');
+    console.log('[Price History Helper] Script loaded successfully');
 
 })();
