@@ -220,12 +220,6 @@
             border-color: #FFB84D;
         }
 
-        .ph-btn-disabled {
-            opacity: 0.65;
-            cursor: wait;
-            pointer-events: none;
-        }
-
         .ph-loading {
             text-align: center;
             padding: 20px 12px;
@@ -378,93 +372,6 @@
         return (((current - compare) / compare) * 100).toFixed(1);
     }
 
-    function slugifyForPriceHistory(title) {
-        return (title || '')
-            .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .trim()
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-');
-    }
-
-    function buildPriceHistoryCandidates(asin, productTitle, marketplace) {
-        const base = 'https://pricehistory.app';
-        const cleanAsin = (asin || '').trim();
-        const slug = slugifyForPriceHistory(productTitle || '');
-        const marketplaceSlug = (marketplace || '').replace(/^www\./, '').toLowerCase();
-        const candidateSet = new Set();
-
-        if (slug) {
-            candidateSet.add(`${base}/product/${slug}-${cleanAsin}`);
-            candidateSet.add(`${base}/product/${slug}`);
-            candidateSet.add(`${base}/search/${slug}`);
-            candidateSet.add(`${base}/search?q=${encodeURIComponent(slug)}`);
-        }
-
-        if (cleanAsin) {
-            candidateSet.add(`${base}/product/${cleanAsin}`);
-            candidateSet.add(`${base}/product/${cleanAsin}/`);
-            candidateSet.add(`${base}/search/${cleanAsin}`);
-            candidateSet.add(`${base}/search?q=${encodeURIComponent(cleanAsin)}`);
-            candidateSet.add(`${base}/search?query=${encodeURIComponent(cleanAsin)}`);
-            candidateSet.add(`${base}/search?search=${encodeURIComponent(cleanAsin)}`);
-
-            if (marketplaceSlug) {
-                candidateSet.add(`${base}/product/${cleanAsin}?marketplace=${encodeURIComponent(marketplaceSlug)}`);
-                candidateSet.add(`${base}/search?q=${encodeURIComponent(`${cleanAsin} ${marketplaceSlug}`)}`);
-            }
-        }
-
-        return Array.from(candidateSet);
-    }
-
-    function buildPriceHistoryFallbackUrl(asin) {
-        const hashPart = asin ? `#search=${encodeURIComponent(asin)}` : '';
-        return `https://pricehistory.app/${hashPart}`;
-    }
-
-    function resolvePriceHistoryLink(candidates, callback) {
-        if (!Array.isArray(candidates) || !candidates.length) {
-            callback(null);
-            return;
-        }
-
-        let resolved = false;
-
-        const tryCandidate = (index) => {
-            if (resolved) return;
-            if (index >= candidates.length) {
-                resolved = true;
-                callback(null);
-                return;
-            }
-
-            const url = candidates[index];
-
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url,
-                nocache: true,
-                timeout: 5000,
-                headers: {
-                    'Accept': 'text/html'
-                },
-                onload: (response) => {
-                    if (response.status >= 200 && response.status < 400) {
-                        resolved = true;
-                        callback(url);
-                    } else {
-                        tryCandidate(index + 1);
-                    }
-                },
-                onerror: () => tryCandidate(index + 1),
-                ontimeout: () => tryCandidate(index + 1)
-            });
-        };
-
-        tryCandidate(0);
-    }
-
     function getKeepaDomainId() {
         const host = window.location.hostname.replace(/^www\./, '');
         const keepaDomainMap = {
@@ -552,8 +459,6 @@
         // Real implementation would fetch from API
         const lowestPrice = currentPrice ? Math.round(currentPrice * 0.70) : null;
         const highestPrice = currentPrice ? Math.round(currentPrice * 1.30) : null;
-        const productTitle = getProductTitle();
-        const priceHistoryCandidates = buildPriceHistoryCandidates(asin, productTitle, window.location.hostname);
         const keepaLink = buildKeepaUrl(asin);
 
         let savingsHTML = '';
@@ -597,22 +502,14 @@
                 ${savingsHTML}
 
                 <div class="ph-info">
-                    ℹ️ Click below to view detailed price history with accurate lowest/highest prices and historical charts
+                    ℹ️ Click below to view detailed price history with accurate lowest/highest prices and historical charts on Keepa
                 </div>
 
                 <div class="ph-buttons">
-                    <a id="ph-pricehistory-link"
-                       href="#"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       class="ph-btn ph-btn-primary ph-btn-disabled"
-                       data-state="resolving">
-                        📊 View Full History - PriceHistory.app
-                    </a>
                     <a href="${keepaLink}"
                        target="_blank"
                        rel="noopener noreferrer"
-                       class="ph-btn">
+                       class="ph-btn ph-btn-primary">
                         📈 View on Keepa
                     </a>
                 </div>
@@ -627,40 +524,6 @@
         widget.querySelector('.ph-close').addEventListener('click', () => {
             widget.style.animation = 'slideIn 0.3s ease-out reverse';
             setTimeout(() => widget.remove(), 300);
-        });
-
-        initializePriceHistoryButton(widget, priceHistoryCandidates, asin);
-    }
-
-    function initializePriceHistoryButton(widget, candidates, asin) {
-        const buttonEl = widget.querySelector('#ph-pricehistory-link');
-        if (!buttonEl) return;
-
-        const originalHtml = buttonEl.innerHTML;
-
-        const preventClickWhileResolving = (event) => {
-            if (buttonEl.getAttribute('data-state') === 'resolving') {
-                event.preventDefault();
-            }
-        };
-
-        buttonEl.innerHTML = '🔍 Checking PriceHistory.app...';
-        buttonEl.classList.add('ph-btn-disabled');
-        buttonEl.addEventListener('click', preventClickWhileResolving);
-
-        resolvePriceHistoryLink(candidates, (resolvedUrl) => {
-            if (resolvedUrl) {
-                buttonEl.href = resolvedUrl;
-                buttonEl.innerHTML = originalHtml;
-                buttonEl.setAttribute('data-state', 'ready');
-            } else {
-                buttonEl.href = buildPriceHistoryFallbackUrl(asin);
-                buttonEl.innerHTML = '🔍 Search PriceHistory.app manually';
-                buttonEl.setAttribute('data-state', 'fallback');
-            }
-
-            buttonEl.classList.remove('ph-btn-disabled');
-            buttonEl.removeEventListener('click', preventClickWhileResolving);
         });
     }
 
