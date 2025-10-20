@@ -7,6 +7,8 @@ A curated collection of Tampermonkey/Greasemonkey userscripts to enhance your we
 ### 🛒 [Amazon Price History Tracker](./AmazonPriceHistory/)
 Track price history for products on Amazon India with visual widgets and links to detailed price tracking services.
 
+**Install:** [Click to install](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/AmazonPriceHistory/AmazonPriceHistory.user.js)
+
 **Features:**
 - Compact, responsive widget showing current, lowest, and highest prices
 - Direct links to PriceHistory.app and Keepa
@@ -19,6 +21,8 @@ Track price history for products on Amazon India with visual widgets and links t
 
 ### 🔗 [Bypass Shortlinks](./BypassShortlinks/)
 Automatically bypass URL shorteners and redirect pages to get to your destination faster.
+
+**Install:** [Click to install](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/BypassShortlinks/BypassShortlinks.user.js)
 
 **Features:**
 - Supports hundreds of shortlink services
@@ -33,6 +37,8 @@ Automatically bypass URL shorteners and redirect pages to get to your destinatio
 ### 🔓 [Web Restriction Remover](./WebRestrictionRemover/)
 Remove annoying restrictions on websites that prevent copying, selecting text, or using right-click menus.
 
+**Install:** [Click to install](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/WebRestrictionRemover/RemoveWebLimits.user.js)
+
 **Features:**
 - Enable copy/paste on restricted sites
 - Enable text selection
@@ -45,6 +51,8 @@ Remove annoying restrictions on websites that prevent copying, selecting text, o
 
 ### 🔤 [Font Changer (Monaco/PT Mono)](./FontChanger/)
 Change website fonts to PT Mono for better readability while preserving icons and UI elements.
+
+**Install:** [v2.0](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/FontChanger/MonacoFontChanger-v2.0.user.js) | [v1.3](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/FontChanger/MonacoFontChanger-v1.3.user.js) | [v1.1](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/FontChanger/MonacoFontChanger-v1.1.user.js) | [v0.3](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/FontChanger/MonacoFontChanger-v0.3.user.js)
 
 **Features:**
 - Multiple versions available (v0.3, v1.1, v1.3, v2.0)
@@ -65,6 +73,8 @@ Change website fonts to PT Mono for better readability while preserving icons an
 ### 🏠 [NoBroker Helper](./NoBrokerHelper/)
 Extract property details from NoBroker listings and calculate distance to Amazon office locations.
 
+**Install:** [Click to install](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/NoBrokerHelper/NoBrokerHelper.user.js)
+
 **Features:**
 - Auto-calculates distance to Amazon DC Rome BLR26
 - Extracts property details (rent, deposit, area, etc.)
@@ -77,6 +87,8 @@ Extract property details from NoBroker listings and calculate distance to Amazon
 
 ### 💻 [Codeforces Helper](./CodeforcesHelper/)
 Quick access to optimized solutions on Codeforces problems.
+
+**Install:** [Click to install](https://github.com/pravesh-pandey/TamperScripts/raw/refs/heads/main/CodeforcesHelper/CodeforcesHelper.user.js)
 
 **Features:**
 - Adds "Best Solutions" button to problem pages

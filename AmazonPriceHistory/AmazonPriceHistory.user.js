@@ -372,6 +372,38 @@
         return (((current - compare) / compare) * 100).toFixed(1);
     }
 
+    function getKeepaDomainId() {
+        const host = window.location.hostname.replace(/^www\./, '');
+        const keepaDomainMap = {
+            'amazon.com': '1',
+            'amazon.co.uk': '2',
+            'amazon.de': '3',
+            'amazon.fr': '4',
+            'amazon.co.jp': '5',
+            'amazon.ca': '6',
+            'amazon.cn': '7',
+            'amazon.it': '8',
+            'amazon.es': '9',
+            'amazon.in': '10',
+            'amazon.com.mx': '11',
+            'amazon.com.br': '12',
+            'amazon.com.au': '13'
+        };
+
+        return keepaDomainMap[host] || '1';
+    }
+
+    function buildKeepaUrl(asin) {
+        return `https://keepa.com/#!product/${getKeepaDomainId()}-${asin}`;
+    }
+
+    function buildPriceHistoryUrl(asin, productTitle = '') {
+        const searchTerms = productTitle
+            ? `${asin} ${productTitle}`
+            : asin;
+        return `https://pricehistory.app/search?q=${encodeURIComponent(searchTerms)}`;
+    }
+
     /* ============================================
        API FUNCTIONS
        ============================================ */
@@ -434,6 +466,8 @@
         // Real implementation would fetch from API
         const lowestPrice = currentPrice ? Math.round(currentPrice * 0.70) : null;
         const highestPrice = currentPrice ? Math.round(currentPrice * 1.30) : null;
+        const priceHistoryLink = buildPriceHistoryUrl(asin, getProductTitle());
+        const keepaLink = buildKeepaUrl(asin);
 
         let savingsHTML = '';
         if (currentPrice && lowestPrice) {
@@ -480,13 +514,15 @@
                 </div>
 
                 <div class="ph-buttons">
-                    <a href="https://pricehistory.app/product/${asin}"
+                    <a href="${priceHistoryLink}"
                        target="_blank"
+                       rel="noopener noreferrer"
                        class="ph-btn ph-btn-primary">
                         📊 View Full History - PriceHistory.app
                     </a>
-                    <a href="https://keepa.com/#!product/8-${asin}"
+                    <a href="${keepaLink}"
                        target="_blank"
+                       rel="noopener noreferrer"
                        class="ph-btn">
                         📈 View on Keepa
                     </a>
