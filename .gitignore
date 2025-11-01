@@ -1,0 +1,27 @@
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+
+# Node modules (if ever used for build)
+node_modules/
+package-lock.json
+
+# Logs
+*.log
+logs/
+
+# Claude Code
+.claude/

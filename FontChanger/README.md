@@ -1,154 +1,69 @@
 # Monaco Font Changer (PT Mono)
 
-Change website fonts to PT Mono for better readability while preserving icons and UI elements.
+Change website fonts to PT Mono for better readability while keeping icons and UI elements intact.
 
-## Features
+## Highlights
 
-- 🔤 **Beautiful Monospace Font** - Applies PT Mono across all websites
-- 🎨 **Preserves Icons** - Keeps icon fonts (Font Awesome, Material Icons, etc.) intact
-- ⚡ **Lightweight** - Minimal performance impact
-- 🌍 **Universal** - Works on all websites (with exclusions)
-- 🎯 **Multiple Versions** - Choose the version that works best for you
-
-## Available Versions
-
-### v2.0 - Improved (Recommended) ⭐
-**File:** `MonacoFontChanger-v2.0.user.js`
-
-- ✅ Best icon preservation
-- ✅ Most compatible with modern websites
-- ✅ Advanced exclusion rules
-- ⚠️ Excludes Overleaf
-
-**Use when:** You want the best overall experience
-
-### v1.3 - Stable
-**File:** `MonacoFontChanger-v1.3.user.js`
-
-- ✅ Good icon preservation
-- ✅ Stable and tested
-- ✅ Excludes common icon classes
-- ⚠️ Excludes Overleaf
-
-**Use when:** v2.0 causes issues on specific sites
-
-### v1.1 - Basic
-**File:** `MonacoFontChanger-v1.1.user.js`
-
-- ✅ Simple implementation
-- ⚠️ Limited icon preservation
-- ✅ Lightweight
-
-**Use when:** You need a simple font change without advanced features
-
-### v0.3 - Minimal
-**File:** `MonacoFontChanger-v0.3.user.js`
-
-- ✅ No `!important` rules (less aggressive)
-- ⚠️ May not override all fonts
-- ✅ Least likely to break websites
-
-**Use when:** Other versions interfere with website functionality
+- 🔤 **Single Script** – `MonacoFontChanger.user.js` now contains every previous version as selectable modes.
+- 🎯 **Configurable Behaviour** – Switch between recommended, stable, basic, or minimal modes by editing one setting.
+- 🤖 **Smart Icon Preservation** – Advanced mode uses heuristics and mutation observers to keep icons and logos untouched.
+- ⚙️ **Easy to Customize** – Adjust font family, disable logging, or add site exclusions directly in the script header.
 
 ## Installation
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/) browser extension
-2. Choose which version you want (v2.0 recommended)
-3. Click on Tampermonkey icon → Create a new script
-4. Copy the contents of your chosen version file
-5. Paste into the editor and save (Ctrl+S)
+1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
+2. Click the Tampermonkey icon → *Create a new script*.
+3. Delete the default template and paste the contents of `MonacoFontChanger.user.js`.
+4. (Optional) Update the `CONFIG` block near the top of the script.
+5. Save (`Ctrl + S` / `⌘ + S`) and reload the target page.
 
-**Note:** Only install ONE version at a time to avoid conflicts!
+> **Tip:** Uninstall older versions before installing the consolidated script to avoid conflicts.
 
-## Usage
+## Modes
 
-Once installed, all websites will automatically use PT Mono font for text elements:
+The script defaults to the **recommended** mode (advanced heuristics). Change `CONFIG.mode` to pick the behaviour you prefer:
 
-### Font Applied To:
-- Body text
-- Headings (h1-h6)
-- Paragraphs
-- Links
-- Lists
-- Tables
-- Form inputs
-- Code blocks
+| Mode (value) | Best for | Behaviour |
+|--------------|----------|-----------|
+| `recommended` | General use | Smart icon detection, mutation observer, balanced aggressiveness |
+| `stable` | Sites with many custom icons | Aggressive CSS with broad icon class exclusions |
+| `basic` | Lightweight setup | Minimal heuristics with targeted icon preservation |
+| `minimal` | Maximum compatibility | No `!important`; least intrusive font override |
 
-### Font NOT Applied To:
-- Icon fonts (Font Awesome, Material Icons, etc.)
-- SVG elements
-- Image-based text
-- Canvas elements
+Update the line in the script:
+
+```javascript
+const CONFIG = {
+    mode: 'recommended',
+    // ...
+};
+```
 
 ## Customization
 
-To exclude specific websites, edit the script and add to the `@exclude` section:
+- **Exclude websites:** Add additional `@exclude` entries in the metadata block at the top of the script.
+- **Change the font:** Edit `CONFIG.fontFamily` and `CONFIG.fontURL` to point to a different Google Font (or remove the URL if the font is already installed locally).
+- **Debug logging:** Set `CONFIG.debug` to `true` to log applied mode and detection decisions in the console.
 
-```javascript
-// @exclude      *://example.com/*
-// @exclude      *://*.domain.com/*
-```
+## What Gets Styled?
 
-## Why PT Mono?
-
-PT Mono is a beautiful monospace font that:
-- ✅ Improves readability for code and text
-- ✅ Has clear character distinction (0 vs O, 1 vs l vs I)
-- ✅ Loads quickly from Google Fonts
-- ✅ Supports multiple languages
-- ✅ Free and open source
-
-## Compatibility
-
-- ✅ Chrome / Chromium / Edge
-- ✅ Firefox
-- ✅ Safari (with Tampermonkey)
-- ✅ Opera
-
-## Known Exclusions
-
-All versions exclude these sites by default:
-- **Overleaf** - Uses its own editor fonts
-
-You can add more exclusions in the script header.
-
-## Performance
-
-- Loads font from Google Fonts CDN (cached)
-- Minimal CPU usage
-- No runtime JavaScript overhead (pure CSS)
+Text-based elements such as body copy, headings, form controls, tables, and code blocks adopt PT Mono. Icon fonts, SVGs, and known glyph containers are preserved through selector exclusions and the smart detector.
 
 ## Troubleshooting
 
-### Icons showing as boxes or characters
-→ Upgrade to v2.0 or v1.3 for better icon preservation
+- **Icons render as squares:** Switch to `recommended` or `stable` mode for stronger icon preservation.
+- **Fonts don’t change on a site:** Try `stable` mode to force `!important` overrides.
+- **Layout looks off:** Drop to `basic` or `minimal` mode.
+- **Specific site issues:** Add an `@exclude` entry for that domain in the script header.
 
-### Font not changing on some sites
-→ Try v1.3 which uses `!important` rules
+## Legacy Versions
 
-### Website layout broken
-→ Switch to v0.3 (minimal version)
+Previous standalone scripts (`MonacoFontChanger-v*.user.js`) are kept for historical reference but are no longer required. All behaviours are now replicated inside `MonacoFontChanger.user.js`.
 
-### Overleaf font changed
-→ Check that `@exclude` rule is present
+## License & Author
 
-## Version Comparison
-
-| Feature | v2.0 | v1.3 | v1.1 | v0.3 |
-|---------|------|------|------|------|
-| Icon Preservation | ⭐⭐⭐ | ⭐⭐ | ⭐ | ⭐ |
-| Compatibility | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ |
-| Aggressiveness | Medium | High | Medium | Low |
-| Recommended | ✅ | - | - | - |
-
-## Author
-
-Pravesh Pandey
-- LinkedIn: [pravesh25](https://www.linkedin.com/in/pravesh25/)
-
-## License
-
-Free to use and modify
+Created by Pravesh Pandey ([pravesh25](https://www.linkedin.com/in/pravesh25/)).  
+Free to use and modify.
 
 ---
 
