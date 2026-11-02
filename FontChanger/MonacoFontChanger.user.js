@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PT Mono everywhere
 // @namespace    pt-mono-everywhere
-// @version      2.2
+// @version      2.3
 // @description  Uses PT Mono on every website without breaking icon fonts, math, code editors or terminals
 // @match        *://*/*
 // @run-at       document-start
@@ -12,6 +12,8 @@
 // @grant        unsafeWindow
 // @connect      fonts.googleapis.com
 // @connect      fonts.gstatic.com
+// @connect      gstatic.com
+// @connect      *
 // ==/UserScript==
 
 // Tip: to turn it off on a site, add a line above like:
@@ -60,7 +62,10 @@
    *    a) Any element whose text uses Private Use Area characters is an
    *       icon (that's how icon fonts encode glyphs; PT Mono has none).
    *    b) Any stylesheet rule whose font-family is an icon font gets its
-   *       original font restored with higher priority.
+   *       original font restored with higher priority. This includes
+   *       cross-origin stylesheets (e.g. Gemini's CSS on gstatic.com),
+   *       which are downloaded and parsed because the browser won't let
+   *       scripts read their rules directly.
    * ------------------------------------------------------------------ */
   const PUA = /[-]|[\uDB80-\uDBFF][\uDC00-\uDFFF]/;
   const ICON_FONT = /icons?\b|symbols?\b|awesome|glyph|fontello|icomoon|dashicons|codicon|octicon|entypo|typicons|feather|lucide|phosphor|tabler|remixicon|boxicons/i;
@@ -99,6 +104,7 @@
 
   const restored = new Map(); // boosted selector -> original font-family
   let restoreStyle = null;
+  let appliedSize = 0;
 
   function collectRules(rules) {
     for (const r of rules) {
@@ -114,18 +120,39 @@
     }
   }
 
-  function scanStylesheets() {
-    const before = restored.size;
-    for (const sheet of document.styleSheets) {
-      if (sheet.ownerNode === baseStyle || sheet.ownerNode === restoreStyle) continue;
-      let rules;
-      try { rules = sheet.cssRules; } catch (_) { continue; } // cross-origin sheet
-      if (rules) collectRules(rules);
-    }
-    if (restored.size === before) return;
+  function applyRestored() {
+    if (restored.size === appliedSize) return;
+    appliedSize = restored.size;
     const css = [...restored].map(([sel, ff]) => `${sel} { font-family: ${ff} !important; }`).join('\n');
     if (!restoreStyle) restoreStyle = GM_addStyle(css);
     else restoreStyle.textContent = css;
+  }
+
+  // Cross-origin stylesheets: download the CSS text and parse it ourselves.
+  const fetchedSheets = new Set();
+  function scanCrossOriginSheet(href) {
+    if (!href || fetchedSheets.has(href) || !/^https?:/i.test(href)) return;
+    fetchedSheets.add(href);
+    gmGet(href, 'text')
+      .then(text => {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(text); // @import rules are ignored, everything else parses
+        collectRules(sheet.cssRules);
+        applyRestored();
+      })
+      .catch(() => {});
+  }
+
+  function scanStylesheets() {
+    const sheets = [...document.styleSheets];
+    try { sheets.push(...(document.adoptedStyleSheets || [])); } catch (_) {}
+    for (const sheet of sheets) {
+      if (sheet.ownerNode === baseStyle || sheet.ownerNode === restoreStyle) continue;
+      let rules;
+      try { rules = sheet.cssRules; } catch (_) { scanCrossOriginSheet(sheet.href); continue; }
+      if (rules) collectRules(rules);
+    }
+    applyRestored();
   }
 
   let sheetTimer = null;
@@ -279,7 +306,10 @@
         for (const node of m.addedNodes) {
           scanTree(node);
           if (node.nodeName === 'STYLE') scheduleSheetScan();
-          else if (node.nodeName === 'LINK') { node.addEventListener('load', () => scheduleSheetScan(0), { once: true }); }
+          else if (node.nodeName === 'LINK') {
+            node.addEventListener('load', () => scheduleSheetScan(0), { once: true });
+            scheduleSheetScan(); // in case it's already loaded (cached)
+          }
         }
       }
       checkMonaco();
